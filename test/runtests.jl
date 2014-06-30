@@ -27,17 +27,17 @@ end
 # -------------------------------------------------------------------------------------------------------------------------
 # feature extraction
 # -------------------------------------------------------------------------------------------------------------------------
-# @test ngrams(["a", "b", "c"], order = 3) == ["a", "a b", "a b c"]
-# @test ngrams(["a", "b", "c"], order = 3, truncated_start = true) == ["a b c"]
+@test ngrams(["a", "b", "c"], order = 3) == ["a", "a b", "a b c"]
+@test ngrams(["a", "b", "c"], order = 3, truncated_start = true) == ["a b c"]
 
-# @test ngrams(["a", "b", "c"], order = 2) == ["a", "a b", "b c"]
-# @test ngrams(["a", "b", "c"], order = 2, truncated_start = true) == ["a b", "b c"]
+@test ngrams(["a", "b", "c"], order = 2) == ["a", "a b", "b c"]
+@test ngrams(["a", "b", "c"], order = 2, truncated_start = true) == ["a b", "b c"]
 
-# @test ngrams(["a", "b", "c"], order = 1) == ["a", "b", "c"]
-# @test ngrams(["a", "b", "c"], order = 1, truncated_start = true) == ["a", "b", "c"]
+@test ngrams(["a", "b", "c"], order = 1) == ["a", "b", "c"]
+@test ngrams(["a", "b", "c"], order = 1, truncated_start = true) == ["a", "b", "c"]
 
-# @test ngrams(["a"], order = 3) == ["a"]
-# @test ngrams(["a"], order = 3, truncated_start = true) == []
+@test ngrams(["a"], order = 3) == ["a"]
+@test ngrams(["a"], order = 3, truncated_start = true) == []
 
 # feature vector tests
 lines = (Array{String})[]
@@ -73,19 +73,12 @@ test_truth  = map(l -> split(chomp(l), '\t')[1], filelines("data/nus-sms/test.ts
 
 @info logger "train: $(length(train)), test: $(length(test))"
 
-@profile bkgmodel, fextractor, model = lid_train(train, train_truth, lid_tokenizer,
-                                        trainer = (fvs, truth, init_model) -> train_mira(fvs, truth, init_model, iterations = 4, k = 2, C = 0.01, average = true),
+bkgmodel, fextractor, model = lid_train(train, train_truth, lid_tokenizer,
+                                        trainer = (fvs, truth, init_model) -> train_mira(fvs, truth, init_model, iterations = 2, k = 2, C = 0.01, average = true),
                                         iteration_method = :eager)
-Profile.print(format = :flat)
+
 confmat = DefaultDict(String, DefaultDict{String, Int32}, () -> DefaultDict(String, Int32, 0))
 @info logger @sprintf("mira test set error rate: %7.3f", test_classification(model, lazy_map(fextractor, test), test_truth, record = (t, h) -> confmat[t][h] += 1) * 100.0)
-print_confusion_matrix(confmat)
-
-bkgmodel, fextractor, model = lid_train(collect(train), collect(train_truth), lid_tokenizer,
-                                        trainer = (fvs, truth, init_model) -> train_libsvm(fvs, truth, C = 1.0),
-                                        iteration_method = :eager)
-confmat = DefaultDict(String, DefaultDict{String, Int32}, () -> DefaultDict(String, Int32, 0))
-@info logger @sprintf("svm test set error rate: %7.3f", test_classification(model, lazy_map(fextractor, test), test_truth, record = (t, h) -> confmat[t][h] += 1) * 100.0)
 print_confusion_matrix(confmat)
 
 

@@ -21,17 +21,14 @@ export ngrams, count, tfnorm, sparse_count, norm, znorm
 # -------------------------------------------------------------------------------------------------------------------------
 # feature extractors
 # -------------------------------------------------------------------------------------------------------------------------
-function ngrams(words; order = 2, truncated_start = false)
-  ret     = {}
-  history = {}
+function ngrams(words :: Array; order = 2, truncated_start = false)
+  ret = String[]
 
-  for w in words
-    if length(history) == order
-      shift!(history)
-    end
-    push!(history, w)
-    if length(history) == order || truncated_start == false
-      push!(ret, join(history, " "))
+  for wi = 1:length(words)
+    if wi - order >= 0
+      push!(ret, join(words[wi-order+1:wi], " "))
+    elseif !truncated_start
+      push!(ret, join(words[1:wi], " "))
     end
   end
   return ret

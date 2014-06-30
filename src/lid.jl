@@ -22,11 +22,12 @@ export lid_train, lid_tokenizer
 # LID
 # -------------------------------------------------------------------------------------------------------------------------
 function lid_tokenizer(text)
-  x = strip(text)
+  x     = strip(text)
+  chars = split(x, r"")
   vcat(split(x, default_space), 
-       (String)[ string(ng) for ng in ngrams(x, order = 1) ],
-       (String)[ string(ng) for ng in ngrams(x, order = 2) ],
-       (String)[ string(ng) for ng in ngrams(x, order = 3) ]
+       chars,
+       ngrams(chars, order = 2),
+       ngrams(chars, order = 3)
        )
 end
 
