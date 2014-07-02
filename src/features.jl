@@ -85,28 +85,6 @@ function ngrams!(ret :: Array, words :: String; order = 2, truncated_start = fal
   return ret
 end
 
-# function ngrams!(ret :: Array, words :: String; order = 2, truncated_start = false)
-#   wi = 1
-
-#   for i = 1:(order - 1)
-#     if !truncated_start
-#       push!(ret, make_string(words, 1, wi))
-#     end
-#     wi = nextind(words, wi)
-#     if wi > endof(words)
-#       break
-#     end
-#   end
-
-#   pwi = 1
-#   while wi <= endof(words)
-#     push!(ret, make_string(words, pwi, wi))
-#     pwi = nextind(words, pwi)
-#     wi  = nextind(words, wi)
-#   end
-#   return ret
-# end
-
 ngram_iterator(words :: String; order = 2, truncated_start = false) = NgramStringIterator(words, order, truncated_start)
 
 # -------------------------------------------------------------------------------------------------------------------------
