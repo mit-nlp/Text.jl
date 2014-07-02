@@ -27,6 +27,7 @@ end
 # -------------------------------------------------------------------------------------------------------------------------
 # feature extraction
 # -------------------------------------------------------------------------------------------------------------------------
+# ngrams from arrays
 @test ngrams(["a", "b", "c"], order = 3) == ["a", "a b", "a b c"]
 @test ngrams(["a", "b", "c"], order = 3, truncated_start = true) == ["a b c"]
 
@@ -39,6 +40,7 @@ end
 @test ngrams(["a"], order = 3) == ["a"]
 @test ngrams(["a"], order = 3, truncated_start = true) == []
 
+# ngrams from strings
 @test ngrams("abc", order = 3) == ["a", "ab", "abc"]
 @test ngrams("abc", order = 3, truncated_start = true) == ["abc"]
 
@@ -54,6 +56,47 @@ end
 @test ngrams("a", order = 3, truncated_start = true) == []
 @test ngrams("ab", order = 3, truncated_start = true) == []
 @test ngrams("abcd", order = 3, truncated_start = true) == ["abc", "bcd"]
+
+@test ngrams("是的", order = 1) == ["是", "的"]
+@test ngrams("是的", order = 2) == ["是", "是的"]
+@test ngrams("是的", order = 3) == ["是", "是的"]
+@test ngrams("是的", order = 3, truncated_start = true) == []
+
+@test ngrams("陇陇*", order = 1) == ["陇", "陇", "*"]
+@test ngrams("陇陇*", order = 2) == ["陇", "陇陇", "陇*"]
+@test ngrams("陇陇*", order = 3) == ["陇", "陇陇", "陇陇*"]
+@test ngrams("陇陇*", order = 3, truncated_start = true) == ["陇陇*"]
+
+@test ngrams("", order = 1) == []
+
+# ngram iterator
+@test collect(ngram_iterator("abc", order = 3)) == ["a", "ab", "abc"]
+@test collect(ngram_iterator("abc", order = 3, truncated_start = true)) == ["abc"]
+
+@test collect(ngram_iterator("abc", order = 2)) == ["a", "ab", "bc"]
+@test collect(ngram_iterator("abc", order = 2, truncated_start = true)) == ["ab", "bc"]
+
+@test collect(ngram_iterator("abc", order = 1)) == ["a", "b", "c"]
+@test collect(ngram_iterator("abc", order = 1, truncated_start = true)) == ["a", "b", "c"]
+
+@test collect(ngram_iterator("a", order = 3)) == ["a"]
+@test collect(ngram_iterator("ab", order = 3)) == ["a", "ab"]
+@test collect(ngram_iterator("abcd", order = 3)) == ["a", "ab", "abc", "bcd"]
+@test collect(ngram_iterator("a", order = 3, truncated_start = true)) == []
+@test collect(ngram_iterator("ab", order = 3, truncated_start = true)) == []
+@test collect(ngram_iterator("abcd", order = 3, truncated_start = true)) == ["abc", "bcd"]
+
+@test collect(ngram_iterator("是的", order = 1)) == ["是", "的"]
+@test collect(ngram_iterator("是的", order = 2)) == ["是", "是的"]
+@test collect(ngram_iterator("是的", order = 3)) == ["是", "是的"]
+@test collect(ngram_iterator("是的", order = 3, truncated_start = true)) == []
+
+@test collect(ngram_iterator("陇陇*", order = 1)) == ["陇", "陇", "*"]
+@test collect(ngram_iterator("陇陇*", order = 2)) == ["陇", "陇陇", "陇*"]
+@test collect(ngram_iterator("陇陇*", order = 3)) == ["陇", "陇陇", "陇陇*"]
+@test collect(ngram_iterator("陇陇*", order = 3, truncated_start = true)) == ["陇陇*"]
+
+@test collect(ngram_iterator("", order = 1)) == []
 
 # feature vector tests
 lines = (Array{String})[]
@@ -88,8 +131,19 @@ test        = map(l -> split(chomp(l), '\t')[2], filelines("data/nus-sms/test.ts
 test_truth  = map(l -> split(chomp(l), '\t')[1], filelines("data/nus-sms/test.tsv.gz"))
 
 @info logger "train: $(length(train)), test: $(length(test))"
+for t in train
+  try
+    @test lid_tokenizer(t) == collect(lid_iterating_tokenizer(t))
+  catch e
+    @debug logger "failed @ t == <$t>"
+    @debug logger "token    : $(lid_tokenizer(t))"
+    @debug logger "iterating: $(collect(lid_iterating_tokenizer(t)))"
+    exit(1)
+  end
+    
+end
 
-bkgmodel, fextractor, model = lid_train(train, train_truth, lid_tokenizer,
+bkgmodel, fextractor, model = lid_train(train, train_truth, lid_iterating_tokenizer,
                                         trainer = (fvs, truth, init_model) -> train_mira(fvs, truth, init_model, iterations = 2, k = 2, C = 0.01, average = true),
                                         iteration_method = :eager)
 
@@ -97,6 +151,6 @@ confmat = DefaultDict(String, DefaultDict{String, Int32}, () -> DefaultDict(Stri
 res     = test_classification(model, lazy_map(fextractor, test), test_truth, record = (t, h) -> confmat[t][h] += 1) * 100.0
 @info logger @sprintf("mira test set error rate: %7.3f", res)
 print_confusion_matrix(confmat)
-@test abs(res - 0.700) < 0.03
+@test abs(res - 0.700) < 0.01
 
 

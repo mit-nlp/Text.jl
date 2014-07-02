@@ -18,6 +18,7 @@
 # limitations under the License.
 module Text
 using DataStructures, Devectorize, Ollam, Stage, GZip
+import Base: start, done, next
 
 # -------------------------------------------------------------------------------------------------------------------------
 # module-wide utilities

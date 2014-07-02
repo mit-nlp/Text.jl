@@ -16,13 +16,30 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-export lid_train, lid_tokenizer
+export lid_train, lid_tokenizer, lid_iterating_tokenizer
+using Iterators
 
 # -------------------------------------------------------------------------------------------------------------------------
 # LID
 # -------------------------------------------------------------------------------------------------------------------------
+function lid_iterating_tokenizer(text)
+  x   = strip(text)
+  if x == ""
+    return []
+  end
+  res = chain(split(x, default_space),
+              ngram_iterator(x, order = 1),
+              ngram_iterator(x, order = 2),
+              ngram_iterator(x, order = 3)
+              )
+  return res
+end
+
 function lid_tokenizer(text)
   x   = strip(text)
+  if x == ""
+    return []
+  end
   res = split(x, default_space)
   ngrams!(res, x, order = 1)
   ngrams!(res, x, order = 2)

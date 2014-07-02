@@ -42,9 +42,10 @@ function apply(bkg::BKG, counts)
   return counts
 end
 
-function make_background(features; mincount = 1, prune = 0.0, unk = true, norm = stats -> min(1.0 ./ stats, 1e10))
+function make_background(features; mincount = 1, prune = 0.0, unk = true, norm = stats -> min(1.0 ./ stats, 1e10), logger = Log(STDERR))
   dict = DefaultDict(String, Int32, 0)
 
+  @timer logger "building background dictionary" begin
   # Count
   for fv in features
     for f in fv
@@ -63,12 +64,14 @@ function make_background(features; mincount = 1, prune = 0.0, unk = true, norm =
     total += v
   end
   dict[unk_token] = unkcount
+  end # timer
 
   # index
   index          = (String)[unk_token]
   rev            = DefaultDict(String, Int32, 1)
   rev[unk_token] = 1
   i              = 2
+  @timer logger "building index" begin
   for (k, v) in dict
     if k != unk_token
       push!(index, k)
@@ -76,9 +79,11 @@ function make_background(features; mincount = 1, prune = 0.0, unk = true, norm =
       i += 1
     end
   end
+  end # timer
 
-  # make sparse vector
+  # make model vector
   stats = Array(Float64, i-1)
+  @timer logger "making bkg vector and pruning" begin
   for (k, v) in dict
     stats[rev[k]] = v
   end
@@ -90,6 +95,7 @@ function make_background(features; mincount = 1, prune = 0.0, unk = true, norm =
       stats[i] = 0.0
     end
   end
+  end # timer
 
   return BKG(rev, index, norm(stats))
 end

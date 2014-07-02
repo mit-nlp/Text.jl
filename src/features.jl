@@ -16,7 +16,41 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-export ngrams, count, tfnorm, sparse_count, norm, znorm
+export ngrams, count, tfnorm, sparse_count, norm, znorm, ngram_iterator, ngrams!
+
+immutable NgramStringIterator 
+  string :: String
+  order :: Int32
+  truncated_start :: Bool
+end
+type StringPosition
+  start  :: Int32
+  fin    :: Int32
+  nth    :: Int32
+end
+
+function start(ngi :: NgramStringIterator) 
+  if ngi.truncated_start 
+    idx = 1
+    for i = 1:(ngi.order-1)
+      idx = nextind(ngi.string, idx)
+    end
+    return StringPosition(1, idx, ngi.order)
+  else
+    return StringPosition(1, 1, 1)
+  end
+end
+
+done(ngi :: NgramStringIterator, position) = position.fin > endof(ngi.string)
+function next(ngi :: NgramStringIterator, position)
+  str = make_string(ngi.string, position.start, position.fin)
+  if position.nth >= ngi.order
+    position.start = nextind(ngi.string, position.start)
+  end
+  position.nth += 1
+  position.fin  = nextind(ngi.string, position.fin)
+  return str, position
+end
 
 # -------------------------------------------------------------------------------------------------------------------------
 # feature extractors
@@ -34,55 +68,46 @@ function ngrams(words::Array; order = 2, truncated_start = false)
   end
 
   for wi = order:length(words)
-    push!(ret, make_string(words, wi - order + 1, wi)) #join(words[wi-order+1:wi], " "))
+    push!(ret, make_string(words, wi - order + 1, wi))
   end
   return ret
 end
 
 function ngrams(words::String; order = 2, truncated_start = false)
   ret = String[]
-  wi  = 1
-
-  for i = 1:(order - 1)
-    if !truncated_start
-      push!(ret, make_string(words, 1, wi))
-    end
-    wi = nextind(words, wi)
-    if wi > endof(words)
-      break
-    end
-  end
-
-  pwi = 1
-  while wi <= endof(words)
-    push!(ret, make_string(words, pwi, wi))
-    pwi = nextind(words, pwi)
-    wi  = nextind(words, wi)
-  end
-  return ret
+  return ngrams!(ret, words, order = order, truncated_start = truncated_start)
 end
 
 function ngrams!(ret :: Array, words :: String; order = 2, truncated_start = false)
-  wi  = 1
-
-  for i = 1:(order - 1)
-    if !truncated_start
-      push!(ret, make_string(words, 1, wi))
-    end
-    wi = nextind(words, wi)
-    if wi > endof(words)
-      break
-    end
-  end
-
-  pwi = 1
-  while wi <= endof(words)
-    push!(ret, make_string(words, pwi, wi))
-    pwi = nextind(words, pwi)
-    wi  = nextind(words, wi)
+  for x in ngram_iterator(words, order = order, truncated_start = truncated_start)
+    push!(ret, x)
   end
   return ret
 end
+
+# function ngrams!(ret :: Array, words :: String; order = 2, truncated_start = false)
+#   wi = 1
+
+#   for i = 1:(order - 1)
+#     if !truncated_start
+#       push!(ret, make_string(words, 1, wi))
+#     end
+#     wi = nextind(words, wi)
+#     if wi > endof(words)
+#       break
+#     end
+#   end
+
+#   pwi = 1
+#   while wi <= endof(words)
+#     push!(ret, make_string(words, pwi, wi))
+#     pwi = nextind(words, pwi)
+#     wi  = nextind(words, wi)
+#   end
+#   return ret
+# end
+
+ngram_iterator(words :: String; order = 2, truncated_start = false) = NgramStringIterator(words, order, truncated_start)
 
 # -------------------------------------------------------------------------------------------------------------------------
 # feature vector operations
