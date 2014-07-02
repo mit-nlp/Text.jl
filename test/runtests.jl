@@ -39,6 +39,22 @@ end
 @test ngrams(["a"], order = 3) == ["a"]
 @test ngrams(["a"], order = 3, truncated_start = true) == []
 
+@test ngrams("abc", order = 3) == ["a", "ab", "abc"]
+@test ngrams("abc", order = 3, truncated_start = true) == ["abc"]
+
+@test ngrams("abc", order = 2) == ["a", "ab", "bc"]
+@test ngrams("abc", order = 2, truncated_start = true) == ["ab", "bc"]
+
+@test ngrams("abc", order = 1) == ["a", "b", "c"]
+@test ngrams("abc", order = 1, truncated_start = true) == ["a", "b", "c"]
+
+@test ngrams("a", order = 3) == ["a"]
+@test ngrams("ab", order = 3) == ["a", "ab"]
+@test ngrams("abcd", order = 3) == ["a", "ab", "abc", "bcd"]
+@test ngrams("a", order = 3, truncated_start = true) == []
+@test ngrams("ab", order = 3, truncated_start = true) == []
+@test ngrams("abcd", order = 3, truncated_start = true) == ["abc", "bcd"]
+
 # feature vector tests
 lines = (Array{String})[]
 for l in filelines("data/test.txt")
@@ -78,7 +94,9 @@ bkgmodel, fextractor, model = lid_train(train, train_truth, lid_tokenizer,
                                         iteration_method = :eager)
 
 confmat = DefaultDict(String, DefaultDict{String, Int32}, () -> DefaultDict(String, Int32, 0))
-@info logger @sprintf("mira test set error rate: %7.3f", test_classification(model, lazy_map(fextractor, test), test_truth, record = (t, h) -> confmat[t][h] += 1) * 100.0)
+res     = test_classification(model, lazy_map(fextractor, test), test_truth, record = (t, h) -> confmat[t][h] += 1) * 100.0
+@info logger @sprintf("mira test set error rate: %7.3f", res)
 print_confusion_matrix(confmat)
+@test abs(res - 0.700) < 0.03
 
 

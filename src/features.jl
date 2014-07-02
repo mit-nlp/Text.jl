@@ -21,15 +21,65 @@ export ngrams, count, tfnorm, sparse_count, norm, znorm
 # -------------------------------------------------------------------------------------------------------------------------
 # feature extractors
 # -------------------------------------------------------------------------------------------------------------------------
-function ngrams(words :: Array; order = 2, truncated_start = false)
+make_string(words :: String, b, e) = SubString(words, b, e)
+make_string(words :: Array, b, e) = join(words[b:e], " ")
+
+function ngrams(words::Array; order = 2, truncated_start = false)
   ret = String[]
 
-  for wi = 1:length(words)
-    if wi - order >= 0
-      push!(ret, join(words[wi-order+1:wi], " "))
-    elseif !truncated_start
-      push!(ret, join(words[1:wi], " "))
+  if !truncated_start
+    for wi = 1:min(order - 1, length(words))
+      push!(ret, make_string(words, 1, wi))
     end
+  end
+
+  for wi = order:length(words)
+    push!(ret, make_string(words, wi - order + 1, wi)) #join(words[wi-order+1:wi], " "))
+  end
+  return ret
+end
+
+function ngrams(words::String; order = 2, truncated_start = false)
+  ret = String[]
+  wi  = 1
+
+  for i = 1:(order - 1)
+    if !truncated_start
+      push!(ret, make_string(words, 1, wi))
+    end
+    wi = nextind(words, wi)
+    if wi > endof(words)
+      break
+    end
+  end
+
+  pwi = 1
+  while wi <= endof(words)
+    push!(ret, make_string(words, pwi, wi))
+    pwi = nextind(words, pwi)
+    wi  = nextind(words, wi)
+  end
+  return ret
+end
+
+function ngrams!(ret :: Array, words :: String; order = 2, truncated_start = false)
+  wi  = 1
+
+  for i = 1:(order - 1)
+    if !truncated_start
+      push!(ret, make_string(words, 1, wi))
+    end
+    wi = nextind(words, wi)
+    if wi > endof(words)
+      break
+    end
+  end
+
+  pwi = 1
+  while wi <= endof(words)
+    push!(ret, make_string(words, pwi, wi))
+    pwi = nextind(words, pwi)
+    wi  = nextind(words, wi)
   end
   return ret
 end
