@@ -19,7 +19,7 @@
 import Base.getindex
 export default_space, english_stoplist, news_email_header, unk_token
 
-const default_space = r"(\s|\p{Zs})+"
+const default_space = r"[\s\p{Zs}]+"
 # -------------------------------------------------------------------------------------------------------------------------
 # From Lewis04's SMART stop list
 # -------------------------------------------------------------------------------------------------------------------------
