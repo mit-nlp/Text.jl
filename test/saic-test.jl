@@ -35,14 +35,14 @@ bkgmodel, fextractor, model = lid_train(train, train_truth, lid_tokenizer,
                                         trainer = (fvs, truth, init_model) -> train_mira(fvs, truth, init_model, iterations = 20, k = 4, C = 0.01, average = true),
                                         iteration_method = :eager)
 confmat = DefaultDict(String, DefaultDict{String, Int32}, () -> DefaultDict(String, Int32, 0))
-@info logger @sprintf("mira test set error rate: %7.3f", test_classification(model, lazy_map(fextractor, test), test_truth, record = (t, h) -> confmat[t][h] += 1) * 100.0)
+@info @sprintf("mira test set error rate: %7.3f", test_classification(model, lazy_map(fextractor, test), test_truth, record = (t, h) -> confmat[t][h] += 1) * 100.0)
 print_confusion_matrix(confmat)
 
 bkgmodel, fextractor, model = lid_train(collect(train), collect(train_truth), lid_tokenizer,
                                         trainer = (fvs, truth, init_model) -> train_libsvm(fvs, truth, C = 1.0),
                                         iteration_method = :eager)
 confmat = DefaultDict(String, DefaultDict{String, Int32}, () -> DefaultDict(String, Int32, 0))
-@info logger @sprintf("svm test set error rate: %7.3f", test_classification(model, lazy_map(fextractor, test), test_truth, record = (t, h) -> confmat[t][h] += 1) * 100.0)
+@info @sprintf("svm test set error rate: %7.3f", test_classification(model, lazy_map(fextractor, test), test_truth, record = (t, h) -> confmat[t][h] += 1) * 100.0)
 print_confusion_matrix(confmat)
 
 

@@ -17,8 +17,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 module Text
-using DataStructures, Devectorize, Ollam, Stage, GZip
-import Base: start, done, next
+using DataStructures, Devectorize, Ollam, Stage, GZip, Iterators
+import Base: start, done, next, getindex, eltype
 
 # -------------------------------------------------------------------------------------------------------------------------
 # module-wide utilities
@@ -30,6 +30,6 @@ include("readers.jl")
 include("tokenizers.jl")
 include("features.jl")
 include("models.jl")
-include("lid.jl")
+include("tc.jl")
 
 end

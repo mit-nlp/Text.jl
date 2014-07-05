@@ -16,7 +16,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import Base: eltype, start, done, next
 export read_tweets, read_usenet, filelines, zopen
 
 # -------------------------------------------------------------------------------------------------------------------------
@@ -120,14 +119,14 @@ function read_tweets(fn :: String; stopList=english_stoplist, header=news_email_
     end
   end
   t = toq()
-  @info(lg, "finished reading %60s [n = %6d, time = %10.3f]", fn, length(ret), t)
+  @info lg @sprintf("finished reading %60s [n = %6d, time = %10.3f]", fn, length(ret), t)
   return ret, rlat, rlong
 end
 
 # usenet/email single document reader -- 20ng
 function read_usenet(fn :: String; stopList=english_stoplist, header=news_email_header, tokenizer=english_tokenizer, lg=STDERR)
   ignore = false
-  @info(lg, "reading: %s", fn)
+  @info lg @sprintf("reading: %s", fn)
   vec = Dict{String, Float32}()
   for l in eachline(`iconv -f latin1 -t utf8 $fn`)
     cl = lowercase(strip(l))

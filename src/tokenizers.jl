@@ -21,25 +21,36 @@ export english_tokenizer, twenglish_tokenizer
 # -------------------------------------------------------------------------------------------------------------------------
 # Tokenizers
 # -------------------------------------------------------------------------------------------------------------------------
+const punct_word    = r"^[\p{P}\p{Po}\p{Sm}]*(.*?)[\p{P}\p{Po}\p{Sm}]*$"
+const english_space = r"[\s\p{Zs}_-]+"
 
-function patternReplace(w :: String)
-  if ismatch(r"^\d+$", w) return "--number--"
-  elseif ismatch(r"^http:.*$", w) return "--url--"
-  elseif ismatch(r"\d+:\d+(am|pm)$", w) return "--time--"
-  elseif ismatch(r"\d+(am|pm)$", w) return "--time--"
+function pattern_replace(w :: String)
+  if ismatch(r"^[+-]?\p{Sc}\d+([.,]\d+)*$", w) return "--currency--"
+  elseif ismatch(r"^[+-]?\d+([.,]\d+)*%$", w) return "--percent--"
+  elseif ismatch(r"^[+-]?\d+([.,]\d+)*$", w) return "--number--"
+  elseif ismatch(r"^(https?|ftp):.*$"i, w) return "--url--"
+  elseif ismatch(r"\d+:\d+(am|pm)$"i, w) return "--time--"
+  elseif ismatch(r"\d+(am|pm)$"i, w) return "--time--"
   elseif ismatch(r"\d+[-/]\d+$", w) return "--date--"
   elseif ismatch(r"\d+[-/]\d+[-/]\d+$", w) return "--date--"
   else return w 
   end
 end
 
+function prereplace(sent :: String)
+  r = replace(sent, r"n't\b", " not")
+  r = replace(r, r"'s\b", " s's")
+  r = replace(r, r"'d\b", " d'd")
+end
+
+
 function english_tokenizer(s :: String)
   return [ 
     begin 
-      m = match(r"^\p{P}*(.*?)\p{P}*$", w)
+      m = match(punct_word, w)
       nw = (m == nothing ? w : m.captures[1])
-      patternReplace(nw) # ismatch(r"^\d+$", nw) ? "--number--" : nw
-    end for w in filter(x -> !ismatch(r"^(\p{P}|\p{S})+$", x), split(strip(s), r"\s+"))
+      pattern_replace(nw)
+    end for w in filter(x -> !ismatch(r"^[\p{P}\p{C}\p{S})]+$", x), split(prereplace(strip(normalize_string(s, :NFKC))), english_space))
   ]
 end
 
