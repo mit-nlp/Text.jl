@@ -8,15 +8,7 @@ test_truth  = map(l -> split(chomp(l), '\t')[1], filelines("data/nus-sms/test.ts
 
 @info "train: $(length(train)), test: $(length(test))"
 for t in train
-  try
-    @test lid_tokenizer(t) == collect(lid_iterating_tokenizer(t))
-  catch e
-    @debug "failed @ t == <$t>"
-    @debug "token    : $(lid_tokenizer(t))"
-    @debug "iterating: $(collect(lid_iterating_tokenizer(t)))"
-    exit(1)
-  end
-    
+  @test lid_tokenizer(t) == collect(lid_iterating_tokenizer(t))
 end
 
 bkgmodel, fextractor, model = tc_train(train, train_truth, lid_iterating_tokenizer, mincount = 2, cutoff = 1e10, 
@@ -27,7 +19,7 @@ confmat = DefaultDict(String, DefaultDict{String, Int32}, () -> DefaultDict(Stri
 res     = test_classification(model, lazy_map(x -> fextractor(lid_iterating_tokenizer(x)), test), test_truth, record = (t, h) -> confmat[t][h] += 1) * 100.0
 @info @sprintf("mira test set error rate: %7.3f", res)
 print_confusion_matrix(confmat)
-@test abs(res - 0.596) < 0.01
+@expect abs(res - 0.596) < 0.01
 
 # List specific errors
 for (text, t) in zip(test, test_truth)

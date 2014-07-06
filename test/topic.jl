@@ -36,9 +36,14 @@ tokenize_file(fn) = tokenize(text(fn))
 # download and prep data
 # -------------------------------------------------------------------------------------------------------------------------
 getfile("http://qwone.com/~jason/20Newsgroups/20news-bydate.tar.gz", "20news-bydate.tar.gz", expected_size = 14_464_277)
-run(`tar -xvzf 20news-bydate.tar.gz`)
-train, train_truth = getinstances("20news-bydate-train")
-test, test_truth   = getinstances("20news-bydate-test")
+if !isdir("20ng")
+  run(`tar -xvzf 20news-bydate.tar.gz`)
+  mkdir("20ng")
+  mv("20news-bydate-train", "20ng/train")
+  mv("20news-bydate-test", "20ng/test")
+end
+train, train_truth = getinstances("20ng/train")
+test, test_truth   = getinstances("20ng/test")
 @info "train: $(length(train)), test: $(length(test))"
 
 # -------------------------------------------------------------------------------------------------------------------------
@@ -52,7 +57,7 @@ res     = test_classification(model, lazy_map(x -> fextractor(tokenize_file(x)),
                               record = (t, h) -> confmat[t][h] += 1) * 100.0
 @info @sprintf("mira test set error rate: %7.3f", res)
 print_confusion_matrix(confmat, width = 6)
-@test abs(res - 14.485) < 0.01
+@expect abs(res - 14.485) < 0.01
 
 # List specific errors
 # for (tr, t) in zip(test, test_truth)
