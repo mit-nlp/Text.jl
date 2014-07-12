@@ -16,13 +16,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-export english_tokenizer, twenglish_tokenizer
+export english_tokenizer, twenglish_tokenizer, replace_html_entities
 
 # -------------------------------------------------------------------------------------------------------------------------
 # Tokenizers
 # -------------------------------------------------------------------------------------------------------------------------
 const punct_word    = r"^[\p{P}\p{Po}\p{Sm}]*(.*?)[\p{P}\p{Po}\p{Sm}]*$"
 const english_space = r"[\s\p{Zs}_-]+"
+
+function replace_html_entities(s :: String)
+  replace(s, r"&[^;]+?;", s -> s in keys(html_entity_table) ? html_entity_table[s] : s)
+end
 
 function pattern_replace(w :: String)
   if ismatch(r"^[+-]?\p{Sc}\d+([.,]\d+)*$", w) return "--currency--"

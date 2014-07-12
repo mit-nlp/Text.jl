@@ -44,6 +44,10 @@ end
 @expect english_tokenizer("cat's")        == ["cat", "s's"]
 @expect english_tokenizer("how'd")        == ["how", "d'd"]
 
+@expect replace_html_entities("&gt;")             == ">"
+@expect replace_html_entities("&gt;&gt;&gt;")     == ">>>"
+@expect replace_html_entities("Perder aulas com discussões &gt;&gt;&gt;&gt;&gt;") == "Perder aulas com discussões >>>>>"
+@expect replace_html_entities("“@xoShinicexo: \"@Jayxkillz: when you take a shit in the morning, before going to school &gt;&gt;\" eww lmao” 😂") == "“@xoShinicexo: \"@Jayxkillz: when you take a shit in the morning, before going to school >>\" eww lmao” 😂"
 # -------------------------------------------------------------------------------------------------------------------------
 # feature extraction
 # -------------------------------------------------------------------------------------------------------------------------
