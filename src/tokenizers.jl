@@ -16,13 +16,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-export english_tokenizer, twenglish_tokenizer, replace_html_entities
+export english_tokenizer, twenglish_tokenizer, replace_html_entities, twenglish_cleaner
 
 # -------------------------------------------------------------------------------------------------------------------------
 # Tokenizers
 # -------------------------------------------------------------------------------------------------------------------------
-const punct_word    = r"^[\p{P}\p{Po}\p{Sm}]*(.*?)[\p{P}\p{Po}\p{Sm}]*$"
-const english_space = r"[\s\p{Zs}_-]+"
+const punct_word      = r"^[\p{P}\p{Po}\p{Sm}]*(.*?)[\p{P}\p{Po}\p{Sm}]*$"
+const english_space   = r"[\s\p{Zs}_-]+"
+const url_pattern     = r"http://[^\s]*"
+const hashtag_pattern = r"^#.*$"
+const mention_pattern = r"^@.*$"
 
 function replace_html_entities(s :: String)
   replace(s, r"&[^;]+?;", s -> s in keys(html_entity_table) ? html_entity_table[s] : s)
@@ -68,3 +71,22 @@ function twenglish_tokenizer(s :: String)
   ]
 end
 
+function twenglish_cleaner(tw :: String; urls = true, hashtags = true, mentions = true)
+  ctw = replace(normalize_string(tw, :NFKC), default_space, " ")
+  ctw = urls ? replace(ctw, url_pattern, "\u0030\u20E3") : ctw
+
+  while true
+    x = replace_html_entities(ctw)
+    if x != ctw
+      ctw = x
+    else
+      break
+    end
+  end
+
+  words = split(ctw)
+  words = hashtags ? [ ismatch(hashtag_pattern, w) ? "\u0023\u20E3" : w for w in words ] : words
+  words = mentions ? [ ismatch(hashtag_pattern, w) ? "\u0031\u20E3" : w for w in words ] : words
+
+  return join(words, " ")
+end

@@ -1,34 +1,6 @@
 using Text, Stage, Ollam
 using DataStructures
 
-const url_pattern     = r"http://[^\s]*"
-const hashtag_pattern = r"^#.*$"
-const mention_pattern = r"^@.*$"
-
-function clean_tweet(tw)
-  w = replace(strip(tw), url_pattern, "--url--")
-  while true
-    x = replace_html_entities(w)
-    if x != w
-      w = x
-    else
-      break
-    end
-  end
-  if ismatch(r".*&gt;.*", w)
-    println("w: $w")
-    exit(1)
-  end
-  return w
-  # oldwords = split(a, r"\s+")
-  # words = Array(String, length(oldwords))
-  # for w in 1:length(oldwords)
-  #   #words[w] = replace(oldwords[w], hashtag_pattern, "--ht--")
-  #   words[w] = replace(oldwords[w], mention_pattern, "--mt--")
-  # end
-  # return join(words, " ")
-end
-
 # -------------------------------------------------------------------------------------------------------------------------
 # Twitter LID
 # -------------------------------------------------------------------------------------------------------------------------
@@ -52,8 +24,8 @@ xsection = DefaultDict(String, Vector{String}, () -> (String)[])
 for (base, lang) in lang_map
   for l in filelines("data/twitter/$base.tsv.gz")
     tweet = split(l, '\t')
-    text  = clean_tweet(tweet[7])
-    if text != "" && text != "--url--"
+    text  = twenglish_cleaner(tweet[7])
+    if text != ""
       push!(xsection[lang], text)
     end
   end
@@ -67,14 +39,14 @@ end
 @sep
 @info @sprintf("%-30s %10d", "total", total)
 
-train       = vcat([ map(fvt -> fvt, xsection[k][1:min(end-700, 35000)]) for k in keys(xsection) ]...)
-train_truth = vcat([ map(fvt -> k,   xsection[k][1:min(end-700, 35000)]) for k in keys(xsection) ]...)
-test        = vcat([ map(fvt -> fvt, xsection[k][min(end-700, int(end * 0.95)):end]) for k in keys(xsection) ]...)
-test_truth  = vcat([ map(fvt -> k,   xsection[k][min(end-700, int(end * 0.95)):end]) for k in keys(xsection) ]...)
+train       = vcat([ map(fvt -> fvt, xsection[k][1:min(end-1200, 25000)]) for k in keys(xsection) ]...)
+train_truth = vcat([ map(fvt -> k,   xsection[k][1:min(end-1200, 25000)]) for k in keys(xsection) ]...)
+test        = vcat([ map(fvt -> fvt, xsection[k][min(end-1200, 25001):end]) for k in keys(xsection) ]...)
+test_truth  = vcat([ map(fvt -> k,   xsection[k][min(end-1200, 25001):end]) for k in keys(xsection) ]...)
 @info "size of train: $(length(train)), size of test: $(length(test))"
 
 bkgmodel, fextractor, model = tc_train(train, train_truth, lid_iterating_tokenizer, mincount = 2, cutoff = 1e10, 
-                                       trainer = (fvs, truth, init_model) -> train_mira(fvs, truth, init_model, iterations = 30, k = 12, C = 0.01, average = true),
+                                       trainer = (fvs, truth, init_model) -> train_mira(fvs, truth, init_model, iterations = 20, k = 12, C = 0.01, average = true),
                                        iteration_method = :eager)
 
 confmat = DefaultDict(String, DefaultDict{String, Int32}, () -> DefaultDict(String, Int32, 0))
@@ -83,15 +55,23 @@ res     = test_classification(model, lazy_map(x -> fextractor(lid_iterating_toke
 print_confusion_matrix(confmat)
 #@expect abs(res - 0.596) < 0.01
 
-# List specific errors
+# List specific errors and filter correct results
+#filtered       = String[]
+#filtered_truth = String[]
+filt = open("filtered.txt", "w")
 for (text, t) in zip(test, test_truth)
   fv      = fextractor(lid_iterating_tokenizer(text))
   scores  = score(model, fv)
   bidx, b = best(scores)
-  if model.index_class[bidx] != t
-    @debug "ERROR: (ref: $t, hyp: $(model.index_class[bidx])) $text"
+  if model.index_class[bidx] == t
+    #@debug "ERROR: (ref: $t, hyp: $(model.index_class[bidx])) $text"
+  #else
+    #push!(filtered, text)
+    #push!(filtered_truth, t)
+    println(filt, "$t\t$text")
   end
 end
+close(filt)
 
 # save the model
 f = open("model", "w")
