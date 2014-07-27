@@ -34,6 +34,11 @@ Pkg.clone("https://github.com/mit-nlp/Ollam.jl")
 Pkg.clone("https://github.com/mit-nlp/Text.jl")
 ```
 
+Usage
+-----
+
+See `test/runtests.jl` for detailed usage.
+
 License
 -------
 This package was created for the DARPA XDATA program under an Apache v2 License.
