@@ -37,7 +37,7 @@ tokenize_file(fn) = tokenize(text(fn))
 # -------------------------------------------------------------------------------------------------------------------------
 getfile("http://qwone.com/~jason/20Newsgroups/20news-bydate.tar.gz", "20news-bydate.tar.gz", expected_size = 14_464_277)
 if !isdir("20ng")
-  run(`tar -xvzf 20news-bydate.tar.gz`)
+  run(`tar -xzf 20news-bydate.tar.gz`)
   mkdir("20ng")
   mv("20news-bydate-train", "20ng/train")
   mv("20news-bydate-test", "20ng/test")

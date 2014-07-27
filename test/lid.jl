@@ -22,11 +22,11 @@ print_confusion_matrix(confmat)
 @expect abs(res - 0.596) < 0.01
 
 # List specific errors
-for (text, t) in zip(test, test_truth)
-  fv      = fextractor(lid_iterating_tokenizer(text))
-  scores  = score(model, fv)
-  bidx, b = best(scores)
-  if model.index_class[bidx] != t
-    @debug "ERROR: (ref: $t, hyp: $(model.index_class[bidx])) $text"
-  end
-end
+# for (text, t) in zip(test, test_truth)
+#   fv      = fextractor(lid_iterating_tokenizer(text))
+#   scores  = score(model, fv)
+#   bidx, b = best(scores)
+#   if model.index_class[bidx] != t
+#     @debug "ERROR: (ref: $t, hyp: $(model.index_class[bidx])) $text"
+#   end
+# end
