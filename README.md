@@ -41,5 +41,5 @@ See `test/runtests.jl` for detailed usage.
 
 License
 -------
-This package was created for the DARPA XDATA program under an Apache v2 License.
+This package was created for the DARPA XDATA and Memex program under an Apache v2 License.
 
