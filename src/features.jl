@@ -62,8 +62,10 @@ function ngrams(words::Array; order = 2, truncated_start = false)
   ret = String[]
 
   if !truncated_start
-    for wi = 1:min(order - 1, length(words))
-      push!(ret, make_string(words, 1, wi))
+    for o = 1:min(order - 1, length(words))
+      for wi = 1:length(words)-(o-1)
+        push!(ret, make_string(words, wi, wi + o - 1))
+      end
     end
   end
 

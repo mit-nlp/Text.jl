@@ -16,7 +16,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-export make_background, stats, vocab_size, apply
+export make_background, stats, vocab_size, apply, BKG
 
 type BKG
   dict  :: Associative{String, Int32}
