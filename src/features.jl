@@ -20,19 +20,19 @@ export ngrams, count, tfnorm, sparse_count, norm, znorm, ngram_iterator, ngrams!
 
 immutable NgramStringIterator 
   string :: String
-  order :: Int32
+  order  :: Int32
   truncated_start :: Bool
 end
 type StringPosition
-  start  :: Int32
-  fin    :: Int32
-  nth    :: Int32
+  start :: Int32
+  fin   :: Int32
+  nth   :: Int32
 end
 
 function start(ngi :: NgramStringIterator) 
   if ngi.truncated_start 
     idx = 1
-    for i = 1:(ngi.order-1)
+    for i = 1:(ngi.order-1)  #necessary because strings are indexed to bytes, not characters
       idx = nextind(ngi.string, idx)
     end
     return StringPosition(1, idx, ngi.order)
@@ -41,14 +41,20 @@ function start(ngi :: NgramStringIterator)
   end
 end
 
-done(ngi :: NgramStringIterator, position) = position.fin > endof(ngi.string)
+done(ngi :: NgramStringIterator, position) = position.nth > ngi.order || position.fin > endof(ngi.string)
 function next(ngi :: NgramStringIterator, position)
   str = make_string(ngi.string, position.start, position.fin)
-  if position.nth >= ngi.order
-    position.start = nextind(ngi.string, position.start)
+
+  if position.fin >= endof(ngi.string)
+    position.start = 0
+    position.fin   = 1
+    for i = 1:position.nth-1
+      position.fin = nextind(ngi.string, position.fin)
+    end
+    position.nth  += 1
   end
-  position.nth += 1
-  position.fin  = nextind(ngi.string, position.fin)
+  position.start = nextind(ngi.string, position.start)
+  position.fin   = nextind(ngi.string, position.fin)
   return str, position
 end
 
@@ -99,7 +105,6 @@ function sparse_count(text, bkg)
   end
   return vec
 end
-
 
 function dict_count(tokens)
   map = DefaultDict{String,Int32}()
