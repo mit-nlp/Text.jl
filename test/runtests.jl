@@ -125,7 +125,7 @@ end
 # -------------------------------------------------------------------------------------------------------------------------
 # feature vector tests
 # -------------------------------------------------------------------------------------------------------------------------
-lines = (Array{String})[]
+lines = (Array{AbstractString})[]
 for l in filelines("data/test.txt")
   tokens = split(strip(l), r"\s+")
   push!(lines, tokens)
@@ -141,8 +141,8 @@ bkg = make_background(lines, mincount = 2)
 @expect stats(bkg, unk_token) == 19.0
 
 @info "bkg[c]    = $(stats(bkg, "c"))"
-@expect sparse_count(lines[1], bkg)   == sparsevec((Int64=>Float64)[ bkg["a"] => 1.0, bkg["b"] => 1.0, bkg["c"] => 1.0], vocab_size(bkg))
-@expect sparse_count(lines[end], bkg) == sparsevec((Int64=>Float64)[ bkg[unk_token] => 1.0 ], vocab_size(bkg))
+@expect sparse_count(lines[1], bkg)   == sparsevec(Dict{Int64,Float64}( bkg["a"] => 1.0, bkg["b"] => 1.0, bkg["c"] => 1.0), vocab_size(bkg))
+@expect sparse_count(lines[end], bkg) == sparsevec(Dict{Int64,Float64}( bkg[unk_token] => 1.0 ), vocab_size(bkg))
 
 @info "sparse[c] = $(sparse_count(lines[1], bkg)[2])"
 @expect norm(sparse_count(lines[1], bkg), bkg)[2] == 3.166666666666667

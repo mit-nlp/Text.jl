@@ -27,11 +27,11 @@ const url_pattern     = r"http://[^\s]*"
 const hashtag_pattern = r"^#.*$"
 const mention_pattern = r"^@.*$"
 
-function replace_html_entities(s :: String)
+function replace_html_entities(s :: AbstractString)
   replace(s, r"&[^;]+?;", s -> s in keys(html_entity_table) ? html_entity_table[s] : s)
 end
 
-function pattern_replace(w :: String)
+function pattern_replace(w :: AbstractString)
   if ismatch(r"^[+-]?\p{Sc}\d+([.,]\d+)*$", w) return "--currency--"
   elseif ismatch(r"^[+-]?\d+([.,]\d+)*%$", w) return "--percent--"
   elseif ismatch(r"^[+-]?\d+([.,]\d+)*$", w) return "--number--"
@@ -44,14 +44,14 @@ function pattern_replace(w :: String)
   end
 end
 
-function prereplace(sent :: String)
+function prereplace(sent :: AbstractString)
   r = replace(sent, r"n't\b", " not")
   r = replace(r, r"'s\b", " s's")
   r = replace(r, r"'d\b", " d'd")
 end
 
 
-function english_tokenizer(s :: String)
+function english_tokenizer(s :: AbstractString)
   return [ 
     begin 
       m = match(punct_word, w)
@@ -61,7 +61,7 @@ function english_tokenizer(s :: String)
   ]
 end
 
-function twenglish_tokenizer(s :: String)
+function twenglish_tokenizer(s :: AbstractString)
   return [ 
     begin 
       m = match(r"^(\p{P}*)(.*?)\p{P}*$", w)
@@ -71,7 +71,7 @@ function twenglish_tokenizer(s :: String)
   ]
 end
 
-function twenglish_cleaner(tw :: String; urls = true, hashtags = true, mentions = true)
+function twenglish_cleaner(tw :: AbstractString; urls = true, hashtags = true, mentions = true)
   ctw = replace(normalize_string(tw, :NFKC), default_space, " ")
   ctw = urls ? replace(ctw, url_pattern, "\u0030\u20E3") : ctw
 

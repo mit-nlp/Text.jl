@@ -62,7 +62,7 @@ function tc_train(text, truth, preprocess::Function; cutoff = 1e10, mincount = 2
   mapper = iteration_method == :eager ? map : lazy_map
 
   # define class index
-  classes = Dict{String, Int32}()
+  classes = Dict{AbstractString, Int32}()
   i       = 1
   @timer logger "indexing truth" for t in truth
     if !(t in keys(classes))

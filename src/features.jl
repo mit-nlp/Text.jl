@@ -16,14 +16,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import Base.norm
 export ngrams, count, tfnorm, sparse_count, norm, znorm, ngram_iterator, ngrams!
 
 immutable NgramStringIterator 
-  string :: String
+  string :: AbstractString
   order  :: Int32
   truncated_start :: Bool
 end
-type StringPosition
+type AbstractStringPosition
   start :: Int32
   fin   :: Int32
   nth   :: Int32
@@ -35,9 +36,9 @@ function start(ngi :: NgramStringIterator)
     for i = 1:(ngi.order-1)  #necessary because strings are indexed to bytes, not characters
       idx = nextind(ngi.string, idx)
     end
-    return StringPosition(1, idx, ngi.order)
+    return AbstractStringPosition(1, idx, ngi.order)
   else
-    return StringPosition(1, 1, 1)
+    return AbstractStringPosition(1, 1, 1)
   end
 end
 
@@ -61,11 +62,11 @@ end
 # -------------------------------------------------------------------------------------------------------------------------
 # feature extractors
 # -------------------------------------------------------------------------------------------------------------------------
-make_string(words :: String, b, e) = SubString(words, b, e)
+make_string(words :: AbstractString, b, e) = SubString(words, b, e)
 make_string(words :: Array, b, e) = join(words[b:e], " ")
 
 function ngrams(words::Array; order = 2, truncated_start = false)
-  ret = String[]
+  ret = AbstractString[]
 
   if !truncated_start
     for o = 1:min(order - 1, length(words))
@@ -81,19 +82,19 @@ function ngrams(words::Array; order = 2, truncated_start = false)
   return ret
 end
 
-function ngrams(words::String; order = 2, truncated_start = false)
-  ret = String[]
+function ngrams(words :: AbstractString; order = 2, truncated_start = false)
+  ret = AbstractString[]
   return ngrams!(ret, words, order = order, truncated_start = truncated_start)
 end
 
-function ngrams!(ret :: Array, words :: String; order = 2, truncated_start = false)
+function ngrams!(ret :: Array, words :: AbstractString; order = 2, truncated_start = false)
   for x in ngram_iterator(words, order = order, truncated_start = truncated_start)
     push!(ret, x)
   end
   return ret
 end
 
-ngram_iterator(words :: String; order = 2, truncated_start = false) = NgramStringIterator(words, order, truncated_start)
+ngram_iterator(words :: AbstractString; order = 2, truncated_start = false) = NgramStringIterator(words, order, truncated_start)
 
 # -------------------------------------------------------------------------------------------------------------------------
 # feature vector operations
@@ -107,7 +108,7 @@ function sparse_count(text, bkg)
 end
 
 function dict_count(tokens)
-  map = DefaultDict{String,Int32}()
+  map = DefaultDict{AbstractString,Int32}()
   for w in tokens
     map[w] += 1
   end

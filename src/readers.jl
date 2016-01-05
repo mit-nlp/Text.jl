@@ -21,12 +21,12 @@ export read_tweets, read_usenet, filelines, zopen
 # -------------------------------------------------------------------------------------------------------------------------
 # Basic utilities
 # -------------------------------------------------------------------------------------------------------------------------
-function zopen(fn :: String)
+function zopen(fn :: AbstractString)
   return ismatch(r"^.*\.gz$", fn) ? gzopen(fn) : open(fn)
 end
 
 type FileLines
-  name :: String
+  name :: AbstractString
 end
 
 start(itr :: FileLines) = zopen(itr.name)
@@ -45,7 +45,7 @@ eltype(itr :: FileLines) = ByteString
 
 
 # get a file line iterator from a file name, open with gzip as needed
-filelines(fn :: String) = FileLines(fn)
+filelines(fn :: AbstractString) = FileLines(fn)
 streamlines(f) = eachline(f) # convenience
 
 # -------------------------------------------------------------------------------------------------------------------------
@@ -53,7 +53,7 @@ streamlines(f) = eachline(f) # convenience
 # -------------------------------------------------------------------------------------------------------------------------
 
 # read collection of tweets from a file
-function read_tweets(fn :: String; stopList=english_stoplist, header=news_email_header, tokenizer=tenglish_tokenizer, limit=-1, keepFn=x->true, lg=STDERR)
+function read_tweets(fn :: AbstractString; stopList=english_stoplist, header=news_email_header, tokenizer=tenglish_tokenizer, limit=-1, keepFn=x->true, lg=STDERR)
   ret = Dict{String, Float32}[]
   rlat = Float32[]
   rlong = Float32[]
@@ -78,8 +78,8 @@ function read_tweets(fn :: String; stopList=english_stoplist, header=news_email_
       
       # validate text
       for c in text
-        if '\ud800' <= c <= '\udfff' || '\U10ffff' < c 
-          valid = false 
+        if 0xd800 <= c <= 0xdfff || 0x10ffff < c # same check made by isvalid(Char,ch) and deprecated is_valid_char
+          valid = false
         end 
       end
       
@@ -124,7 +124,7 @@ function read_tweets(fn :: String; stopList=english_stoplist, header=news_email_
 end
 
 # usenet/email single document reader -- 20ng
-function read_usenet(fn :: String; stopList=english_stoplist, header=news_email_header, tokenizer=english_tokenizer, lg=STDERR)
+function read_usenet(fn :: AbstractString; stopList=english_stoplist, header=news_email_header, tokenizer=english_tokenizer, lg=STDERR)
   ignore = false
   @info lg @sprintf("reading: %s", fn)
   vec = Dict{String, Float32}()
