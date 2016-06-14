@@ -49,13 +49,19 @@ end
 # -------------------------------------------------------------------------------------------------------------------------
 # training for text classifiers
 # -------------------------------------------------------------------------------------------------------------------------
-function tc_features(text, bkgmodel)
+function tc_features(text::Array, bkgmodel)
   counts = sparse_count(text, bkgmodel)
   counts /= sum(counts)
   return apply(bkgmodel, counts)
 end
 
-function tc_train(text, truth, preprocess::Function; cutoff = 1e10, mincount = 2, prune = 0.0, 
+function tc_features{T<:Array,N}(text::Array{T,N}, bkgmodel)
+  counts = sparse_count(flatten(text), bkgmodel)
+  counts /= sum(counts)
+  return apply(bkgmodel, counts)
+end
+
+function tc_train(text::Array, truth, preprocess::Function; cutoff = 1e10, mincount = 2, prune = 0.0, 
                   iteration_method = :lazy,
                   trainer = (fvs, truth, init_model) -> train_mira(fvs, truth, init_model, iterations = 3, average = true),
                   logger = Log(STDERR))
@@ -81,3 +87,33 @@ function tc_train(text, truth, preprocess::Function; cutoff = 1e10, mincount = 2
   
   return bkgmodel, ptext -> tc_features(ptext, bkgmodel), model
 end
+
+function tc_train{T<:Array,N}(text::Array{T,N}, truth, preprocess::Function; cutoff = 1e10, mincount = 2, prune = 0.0, 
+                              iteration_method = :lazy,
+                              trainer = (fvs, truth, init_model) -> train_mira(fvs, truth, init_model, iterations = 3, average = true),
+                              logger = Log(STDERR))
+  mapper = iteration_method == :eager ? map : lazy_map
+
+  # define class index
+  classes = Dict{AbstractString, Int32}()
+  i       = 1
+  @timer logger "indexing truth" for t in truth
+    if !(t in keys(classes))
+      classes[t] = i
+      i += 1
+    end
+  end
+
+  # prep model
+  @timer logger "preprocessing input"     preprocessed_text = mapper((x) -> mapper(preprocess, x), text)
+  @timer logger "making background model" bkgmodel          = make_background(flatten_iter(preprocessed_text), mincount = mincount, prune = prune, 
+                                                                              norm = stats -> tfnorm(stats, squash = sqrt, cutoff = cutoff))
+  @timer logger "making feature vectors"  fvs               = mapper(text -> tc_features(text, bkgmodel), preprocessed_text)
+  @timer logger "initializating model"    init_model        = LinearModel(classes, vocab_size(bkgmodel))
+  @timer logger "training final model"    model             = trainer(fvs, truth, init_model)
+  
+  return bkgmodel, ptext -> tc_features(ptext, bkgmodel), model
+end
+
+flatten(a)      = mapreduce(x -> isa(x, Array) ? flatten(x) : x, vcat, [], a)
+flatten_iter(a) = map((x) -> flatten(x), a)

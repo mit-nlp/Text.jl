@@ -48,6 +48,14 @@ eltype(itr :: FileLines) = ByteString
 filelines(fn :: AbstractString) = FileLines(fn)
 streamlines(f) = eachline(f) # convenience
 
+#function getfile(name)
+#    file = joinpath(savedir, name)
+#    if !isfile(file)
+#        file = download(urlbase*name, file)
+#    end
+#    file
+#end
+
 # -------------------------------------------------------------------------------------------------------------------------
 # Text format readers
 # -------------------------------------------------------------------------------------------------------------------------

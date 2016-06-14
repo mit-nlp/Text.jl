@@ -1,3 +1,5 @@
+using Text, Stage, Ollam, DataStructures
+
 function text(fn) 
   res = ""
   for l in map(l -> chomp(l), eachline(`iconv -f latin1 -t utf8 $fn`))
