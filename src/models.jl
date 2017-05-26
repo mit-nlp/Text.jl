@@ -16,16 +16,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-export make_background, stats, vocab_size, apply
+import Main.apply
+export make_background, stats, vocab_size, apply, BKG
 
 type BKG
-  dict  :: Associative{String, Int32}
-  index :: Array{String}
+  dict  :: Associative{AbstractString, Int32}
+  index :: Array{AbstractString}
   stats :: Vector{Float64}
 end
 vocab_size(bkg::BKG) = length(bkg.index)
-getindex(bkg::BKG, token :: String) = bkg.dict[token]
-stats(bkg::BKG, s::String) = bkg.stats[bkg[s]]
+getindex(bkg::BKG, token :: AbstractString) = bkg.dict[token]
+stats(bkg::BKG, s::AbstractString) = bkg.stats[bkg[s]]
 
 function tfnorm(stats; cutoff = 1e10, squash :: Function = log)
   for i = 1:length(stats)
@@ -43,7 +44,7 @@ function apply(bkg::BKG, counts)
 end
 
 function make_background(features; mincount = 1, prune = 0.0, unk = true, norm = stats -> min(1.0 ./ stats, 1e10), logger = Log(STDERR))
-  dict = DefaultDict(String, Int32, 0)
+  dict = DefaultDict(AbstractString, Int32, 0)
 
   @timer logger "building background dictionary" begin
   # Count
@@ -67,8 +68,8 @@ function make_background(features; mincount = 1, prune = 0.0, unk = true, norm =
   end # timer
 
   # index
-  index          = (String)[unk_token]
-  rev            = DefaultDict(String, Int32, 1)
+  index          = (AbstractString)[unk_token]
+  rev            = DefaultDict(AbstractString, Int32, 1)
   rev[unk_token] = 1
   i              = 2
   @timer logger "building index" begin

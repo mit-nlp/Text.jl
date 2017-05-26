@@ -1,3 +1,5 @@
+using Text, Stage, Ollam, DataStructures
+
 function text(fn) 
   res = ""
   for l in map(l -> chomp(l), eachline(`iconv -f latin1 -t utf8 $fn`))
@@ -12,8 +14,8 @@ function text(fn)
 end
 
 function getinstances(dir)
-  docs   = String[]
-  truth  = String[]
+  docs   = AbstractString[]
+  truth  = AbstractString[]
 
   for t in filter(d -> d != "." && d != "..", readdir(dir))
     for d in filter(d -> d != "." && d != "..", readdir("$dir/$t"))
@@ -52,7 +54,7 @@ test, test_truth   = getinstances("20ng/test")
 bkgmodel, fextractor, model = tc_train(train, train_truth, tokenize_file, mincount = 2, cutoff = 1e10,
                                        trainer = (fvs, truth, init_model) -> train_mira(fvs, truth, init_model, iterations = 20, k = 19, C = 0.01, average = true),
                                        iteration_method = :eager)
-confmat = DefaultDict(String, DefaultDict{String, Int32}, () -> DefaultDict(String, Int32, 0))
+confmat = DefaultDict(AbstractString, DefaultDict{AbstractString, Int32}, () -> DefaultDict(AbstractString, Int32, 0))
 res     = test_classification(model, lazy_map(x -> fextractor(tokenize_file(x)), test), test_truth, 
                               record = (t, h) -> confmat[t][h] += 1) * 100.0
 @info @sprintf("mira test set error rate: %7.3f", res)
