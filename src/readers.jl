@@ -21,13 +21,14 @@ export read_tweets, read_usenet, filelines, zopen
 # -------------------------------------------------------------------------------------------------------------------------
 # Basic utilities
 # -------------------------------------------------------------------------------------------------------------------------
-function zopen(fn :: String)
+function zopen(fn :: AbstractString)
   return ismatch(r"^.*\.gz$", fn) ? gzopen(fn) : open(fn)
 end
 
 type FileLines
-  name :: String
+  name :: AbstractString
 end
+Base.iteratorsize(::Type{FileLines}) = Base.SizeUnknown()
 
 start(itr :: FileLines) = zopen(itr.name)
 function done(itr :: FileLines, stream)
@@ -38,14 +39,14 @@ function done(itr :: FileLines, stream)
   return true
 end
 function next(itr :: FileLines, stream) 
-  x = readline(stream)
+  x = readline(stream, chomp=false)
   return (x, stream)
 end
 eltype(itr :: FileLines) = ByteString
 
 
 # get a file line iterator from a file name, open with gzip as needed
-filelines(fn :: String) = FileLines(fn)
+filelines(fn :: AbstractString) = FileLines(fn)
 streamlines(f) = eachline(f) # convenience
 
 # -------------------------------------------------------------------------------------------------------------------------
@@ -53,8 +54,8 @@ streamlines(f) = eachline(f) # convenience
 # -------------------------------------------------------------------------------------------------------------------------
 
 # read collection of tweets from a file
-function read_tweets(fn :: String; stopList=english_stoplist, header=news_email_header, tokenizer=tenglish_tokenizer, limit=-1, keepFn=x->true, lg=STDERR)
-  ret = Dict{String, Float32}[]
+function read_tweets(fn :: AbstractString; stopList=english_stoplist, header=news_email_header, tokenizer=tenglish_tokenizer, limit=-1, keepFn=x->true, lg=STDERR)
+  ret = Dict{AbstractString, Float32}[]
   rlat = Float32[]
   rlong = Float32[]
   
@@ -78,7 +79,7 @@ function read_tweets(fn :: String; stopList=english_stoplist, header=news_email_
       
       # validate text
       for c in text
-        if '\ud800' <= c <= '\udfff' || '\U10ffff' < c 
+        if 0xd800 <= c <= 0xdfff || '\U10ffff' < c 
           valid = false 
         end 
       end
@@ -100,7 +101,7 @@ function read_tweets(fn :: String; stopList=english_stoplist, header=news_email_
       
       if (valid)
         text = replace(text, r"\s+"s, " ")
-        vec = Dict{String, Float32}()
+        vec = Dict{AbstractString, Float32}()
         for w in filter(x -> !stopList[x], tokenizer(lowercase(strip(text))))
           if haskey(vec, w)
             vec[w] += 1
@@ -124,10 +125,10 @@ function read_tweets(fn :: String; stopList=english_stoplist, header=news_email_
 end
 
 # usenet/email single document reader -- 20ng
-function read_usenet(fn :: String; stopList=english_stoplist, header=news_email_header, tokenizer=english_tokenizer, lg=STDERR)
+function read_usenet(fn :: AbstractString; stopList=english_stoplist, header=news_email_header, tokenizer=english_tokenizer, lg=STDERR)
   ignore = false
   @info lg @sprintf("reading: %s", fn)
-  vec = Dict{String, Float32}()
+  vec = Dict{AbstractString, Float32}()
   for l in eachline(`iconv -f latin1 -t utf8 $fn`)
     cl = lowercase(strip(l))
     if (ismatch(r"--+", cl)) ignore = true end

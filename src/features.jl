@@ -18,12 +18,14 @@
 # limitations under the License.
 export ngrams, count, tfnorm, sparse_count, norm, znorm, ngram_iterator, ngrams!
 
-immutable NgramStringIterator 
-  string :: String
+struct NgramStringIterator 
+  string :: AbstractString
   order :: Int32
   truncated_start :: Bool
 end
-type StringPosition
+Base.iteratorsize(::Type{NgramStringIterator}) = Base.SizeUnknown()
+
+mutable struct StringPosition
   start  :: Int32
   fin    :: Int32
   nth    :: Int32
@@ -55,11 +57,11 @@ end
 # -------------------------------------------------------------------------------------------------------------------------
 # feature extractors
 # -------------------------------------------------------------------------------------------------------------------------
-make_string(words :: String, b, e) = SubString(words, b, e)
+make_string(words :: AbstractString, b, e) = SubString(words, b, e)
 make_string(words :: Array, b, e) = join(words[b:e], " ")
 
 function ngrams(words::Array; order = 2, truncated_start = false)
-  ret = String[]
+  ret = AbstractString[]
 
   if !truncated_start
     for wi = 1:min(order - 1, length(words))
@@ -73,19 +75,19 @@ function ngrams(words::Array; order = 2, truncated_start = false)
   return ret
 end
 
-function ngrams(words::String; order = 2, truncated_start = false)
-  ret = String[]
+function ngrams(words :: AbstractString; order = 2, truncated_start = false)
+  ret = AbstractString[]
   return ngrams!(ret, words, order = order, truncated_start = truncated_start)
 end
 
-function ngrams!(ret :: Array, words :: String; order = 2, truncated_start = false)
+function ngrams!(ret :: Array, words :: AbstractString; order = 2, truncated_start = false)
   for x in ngram_iterator(words, order = order, truncated_start = truncated_start)
     push!(ret, x)
   end
   return ret
 end
 
-ngram_iterator(words :: String; order = 2, truncated_start = false) = NgramStringIterator(words, order, truncated_start)
+ngram_iterator(words :: AbstractString; order = 2, truncated_start = false) = NgramStringIterator(words, order, truncated_start)
 
 # -------------------------------------------------------------------------------------------------------------------------
 # feature vector operations
@@ -100,7 +102,7 @@ end
 
 
 function dict_count(tokens)
-  map = DefaultDict{String,Int32}()
+  map = DefaultDict{AbstractString,Int32}()
   for w in tokens
     map[w] += 1
   end

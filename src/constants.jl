@@ -22,7 +22,7 @@ export default_space, english_stoplist, news_email_header, unk_token, html_entit
 const default_space = r"[\s\p{Zs}]+"
 
 # PHP's table
-const html_entity_table = [
+const html_entity_table = Dict(
                            "&nbsp;" => " ",
                            "&iexcl;" => "¡",
                            "&cent;" => "¢",
@@ -123,7 +123,7 @@ const html_entity_table = [
                            "&quot;" => "\"",
                            "&lt;" => "<",
                            "&gt;" => ">",
-]
+)
 
 # -------------------------------------------------------------------------------------------------------------------------
 # From Lewis04's SMART stop list

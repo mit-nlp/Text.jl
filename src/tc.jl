@@ -18,6 +18,8 @@
 # limitations under the License.
 export tc_train, lid_tokenizer, lid_iterating_tokenizer
 
+Base.iteratorsize{T}(::Type{IterTools.Chain{T}}) = Base.SizeUnknown()
+
 # -------------------------------------------------------------------------------------------------------------------------
 # LID
 # -------------------------------------------------------------------------------------------------------------------------
@@ -51,7 +53,10 @@ end
 # -------------------------------------------------------------------------------------------------------------------------
 function tc_features(text, bkgmodel)
   counts = sparse_count(text, bkgmodel)
-  counts /= sum(counts)
+  total = sum(counts)
+  if total != 0.0
+    counts /= sum(counts)
+  end
   return apply(bkgmodel, counts)
 end
 
@@ -62,7 +67,7 @@ function tc_train(text, truth, preprocess::Function; cutoff = 1e10, mincount = 2
   mapper = iteration_method == :eager ? map : lazy_map
 
   # define class index
-  classes = Dict{String, Int32}()
+  classes = Dict{AbstractString, Int32}()
   i       = 1
   @timer logger "indexing truth" for t in truth
     if !(t in keys(classes))

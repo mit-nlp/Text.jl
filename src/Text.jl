@@ -17,7 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 module Text
-using DataStructures, Devectorize, Ollam, Stage, GZip, Iterators
+using DataStructures, Devectorize, Ollam, Stage, GZip, IterTools
 import Base: start, done, next, getindex, eltype
 
 # -------------------------------------------------------------------------------------------------------------------------

@@ -18,32 +18,32 @@
 # limitations under the License.
 export make_background, stats, vocab_size, apply
 
-type BKG
-  dict  :: Associative{String, Int32}
-  index :: Array{String}
+mutable struct BKG
+  dict  :: Associative{AbstractString, Int32}
+  index :: Array{AbstractString}
   stats :: Vector{Float64}
 end
 vocab_size(bkg::BKG) = length(bkg.index)
-getindex(bkg::BKG, token :: String) = bkg.dict[token]
-stats(bkg::BKG, s::String) = bkg.stats[bkg[s]]
+getindex(bkg::BKG, token :: AbstractString) = bkg.dict[token]
+stats(bkg::BKG, s::AbstractString) = bkg.stats[bkg[s]]
 
 function tfnorm(stats; cutoff = 1e10, squash :: Function = log)
   for i = 1:length(stats)
-    stats[i] = min(cutoff, squash(1.0 / stats[i]))
+    stats[i] = min.(cutoff, squash(1.0 / stats[i]))
   end
 
   return stats
 end
 
 function apply(bkg::BKG, counts)
-  for i in indices(counts)
+  for i in Ollam.indices(counts)
     counts[i] *= bkg.stats[i]
   end
   return counts
 end
 
-function make_background(features; mincount = 1, prune = 0.0, unk = true, norm = stats -> min(1.0 ./ stats, 1e10), logger = Log(STDERR))
-  dict = DefaultDict(String, Int32, 0)
+function make_background(features; mincount = 1, prune = 0.0, unk = true, norm = stats -> min.(1.0 ./ stats, 1e10), logger = Log(STDERR))
+  dict = DefaultDict{AbstractString, Int32}(0)
 
   @timer logger "building background dictionary" begin
   # Count
@@ -67,8 +67,8 @@ function make_background(features; mincount = 1, prune = 0.0, unk = true, norm =
   end # timer
 
   # index
-  index          = (String)[unk_token]
-  rev            = DefaultDict(String, Int32, 1)
+  index          = (AbstractString)[unk_token]
+  rev            = DefaultDict{AbstractString, Int32}(1)
   rev[unk_token] = 1
   i              = 2
   @timer logger "building index" begin
@@ -82,7 +82,7 @@ function make_background(features; mincount = 1, prune = 0.0, unk = true, norm =
   end # timer
 
   # make model vector
-  stats = Array(Float64, i-1)
+  stats = Array{Float64}(i-1)
   @timer logger "making bkg vector and pruning" begin
   for (k, v) in dict
     stats[rev[k]] = v

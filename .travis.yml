@@ -1,17 +1,8 @@
-language: cpp
-compiler:
-    - clang
+language: julia
+julia:
+  - 0.6
 notifications:
     email: true
-env:
-    matrix:
-        - JULIAVERSION="juliareleases"
-before_install:
-    - sudo add-apt-repository ppa:staticfloat/julia-deps -y
-    - sudo add-apt-repository ppa:staticfloat/${JULIAVERSION} -y
-    - sudo apt-get update -qq -y
-    - sudo apt-get install libpcre3-dev julia -y
-    - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
 script:
     - julia -e 'versioninfo(); Pkg.init(); Pkg.clone("https://github.com/saltpork/Stage.jl"); Pkg.clone("https://github.com/mit-nlp/Ollam.jl"); Pkg.clone(pwd())'
     - cd test; julia --color runtests.jl
